@@ -1,0 +1,4 @@
+# directory with input text files.
+input/
+
+*.beam
