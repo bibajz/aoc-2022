@@ -1,6 +1,6 @@
 -module(day3).
 
--export([read_lines/1, solution_pt1/0]).
+-export([read_lines/1, solution_pt1/0, solution_pt2/0, partition_by_len/2]).
 
 len([_|T]) -> 1 + len(T);
 len([]) -> 0.
@@ -92,3 +92,29 @@ solution_pt1() ->
     fun(C) -> priority_map(C) end,
     lists:map(fun({L1, L2}) -> {ok, C} = first_in_both(L1, L2), C end,
       lists:map(fun(L) -> split_in_half(L) end, Lines)))).
+
+
+partition_by_len_inner(List, Len, AggList) ->
+  Prefix = lists:sublist(List, Len),
+  case len(Prefix) < Len of
+    true -> case len(Prefix) == 0 of 
+      true -> lists:reverse(AggList);
+      false -> lists:reverse([Prefix|AggList])
+    end;
+    false -> partition_by_len_inner(lists:nthtail(Len, List), Len, [Prefix|AggList])
+  end.
+
+partition_by_len(List, Len) -> partition_by_len_inner(List, Len, []).
+
+in_all_three(L1, L2, L3) ->
+  [C|_] = sets:to_list(sets:intersection([sets:from_list(L1), sets:from_list(L2), sets:from_list(L3)])),
+  C.
+
+
+solution_pt2() ->
+  {ok, Lines} = read_lines("input/day3.txt"),
+  lists:sum(
+    lists:map(
+    fun(C) -> priority_map(C) end,
+    lists:map(fun([H1,H2,H3|_]) -> in_all_three(H1,H2,H3) end,
+    partition_by_len(Lines, 3)))).
