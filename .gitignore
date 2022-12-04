@@ -1,4 +1,5 @@
 # directory with input text files.
 input/
 
+_build/
 *.beam
