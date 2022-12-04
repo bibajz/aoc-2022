@@ -1,12 +1,8 @@
 -module(day4).
 
--export([read_lines/1, seq_from_range/1, are_overlapping/2, solution_pt1/0, solution_pt2/0]).
+-import(utils, [read_lines/1]).
 
-read_lines(FileName) ->
-    case file:read_file(FileName) of
-        {ok, Text} -> {ok, lists:droplast(string:split(binary_to_list(Text), "\n", all))};
-        {error, Reason} -> {error, Reason}
-    end.
+-export([solution_pt1/0, solution_pt2/0]).
 
 seq_from_range(Range) ->
     [{L, _}, {R, _}] = lists:map(

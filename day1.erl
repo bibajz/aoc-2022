@@ -1,12 +1,8 @@
 -module(day1).
 
--export([read_lines/1, partition_by/2, solution_pt1/0, solution_pt2/0]).
+-import(utils, [read_lines/1]).
 
-read_lines(FileName) ->
-    case file:read_file(FileName) of
-        {ok, Text} -> {ok, lists:droplast(string:split(Text, "\n", all))};
-        {error, Reason} -> {error, Reason}
-    end.
+-export([solution_pt1/0, solution_pt2/0]).
 
 partition_by_inner([H | T], AggList, List, Func) ->
     case Func(H) of
@@ -33,7 +29,7 @@ solution_pt1() ->
                         L
                     )
                 end,
-                partition_by(fun(X) -> X == <<>> end, Lines)
+                partition_by(fun(X) -> X == "" end, Lines)
             )
         )
     ).
@@ -55,7 +51,7 @@ solution_pt2() ->
                                 L
                             )
                         end,
-                        partition_by(fun(X) -> X == <<>> end, Lines)
+                        partition_by(fun(X) -> X == "" end, Lines)
                     )
                 )
             )

@@ -1,20 +1,13 @@
 -module(day3).
 
--export([read_lines/1, solution_pt1/0, solution_pt2/0, partition_by_len/2]).
+-import(utils, [read_lines/1]).
 
-len([_ | T]) -> 1 + len(T);
-len([]) -> 0.
-
-read_lines(FileName) ->
-    case file:read_file(FileName) of
-        {ok, Text} -> {ok, lists:droplast(string:split(binary_to_list(Text), "\n", all))};
-        {error, Reason} -> {error, Reason}
-    end.
+-export([solution_pt1/0, solution_pt2/0]).
 
 split_on_len(List, Len) ->
     {lists:sublist(List, 1, Len), lists:sublist(List, 1 + Len, Len)}.
 
-split_in_half(List) -> split_on_len(List, round(len(List) / 2)).
+split_in_half(List) -> split_on_len(List, round(length(List) / 2)).
 
 first_in_both_inner([H | T], Set) ->
     case sets:is_element(H, Set) of
