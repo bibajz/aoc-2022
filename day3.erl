@@ -93,9 +93,9 @@ solution_pt1() ->
 
 partition_by_len_inner(List, Len, AggList) ->
     Prefix = lists:sublist(List, Len),
-    case len(Prefix) < Len of
+    case length(Prefix) < Len of
         true ->
-            case len(Prefix) == 0 of
+            case length(Prefix) == 0 of
                 true -> lists:reverse(AggList);
                 false -> lists:reverse([Prefix | AggList])
             end;
