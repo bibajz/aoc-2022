@@ -1,6 +1,6 @@
 -module(utils).
 
--export([read_lines/1, transpose/1]).
+-export([read_lines/1, transpose/1, partition_by_len/2]).
 
 read_lines(FileName) ->
     case file:read_file(FileName) of
@@ -16,3 +16,17 @@ transpose_inner(LoL, Agg, N) ->
     end.
 
 transpose(ListOfLists) -> transpose_inner(ListOfLists, [], 1).
+
+partition_by_len_inner(Len, List, AggList) ->
+    Prefix = lists:sublist(List, Len),
+    case length(Prefix) < Len of
+        true ->
+            case length(Prefix) == 0 of
+                true -> lists:reverse(AggList);
+                false -> lists:reverse([Prefix | AggList])
+            end;
+        false ->
+            partition_by_len_inner(Len, lists:nthtail(Len, List), [Prefix | AggList])
+    end.
+
+partition_by_len(Len, List) -> partition_by_len_inner(Len, List, []).
