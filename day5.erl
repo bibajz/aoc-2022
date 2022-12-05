@@ -2,7 +2,7 @@
 
 -import(utils, [read_lines/1, transpose/1]).
 
--export([partition_by_len/2, solution_pt1/0, parse_instruction/1]).
+-export([partition_by_len/2, solution_pt1/0, solution_pt2/0, parse_instruction/1]).
 
 partition_by_len_inner(Len, List, AggList) ->
     Prefix = lists:sublist(List, Len),
@@ -60,3 +60,31 @@ solution_pt1() ->
     Instructions = lists:map(fun parse_instruction/1, lists:nthtail(1, lists:dropwhile(fun(L) -> L /= "" end, Lines))),
 
     lists:concat(lists:map(fun([H|_]) -> H end, lists:foldl(fun(X, Acc) -> move_stacks(X, Acc) end, Stacks, Instructions))).
+
+
+move_n_pt2(N, From, To) ->
+  {FirstN, Tail} = {lists:sublist(From, N), lists:nthtail(N, From)},
+  {Tail, FirstN ++ To}.
+
+
+move_stacks_pt2({N, From, To}, Stacks) ->
+    {NewFrom, NewTo} = move_n_pt2(N, lists:nth(From, Stacks), lists:nth(To, Stacks)),
+    lists:map(
+      fun({I, X}) -> case I == From of
+          true -> NewFrom;
+          false -> case I == To of
+              true -> NewTo;
+              false -> X
+              end
+          end
+      end, lists:enumerate(Stacks)).
+
+
+solution_pt2() ->
+    {ok, Lines} = read_lines("input/day5.txt"),
+    ContainerLines = lists:droplast(lists:takewhile(fun(L) -> L /= "" end, Lines)),
+    Stacks = construct_stacks(ContainerLines),
+
+    Instructions = lists:map(fun parse_instruction/1, lists:nthtail(1, lists:dropwhile(fun(L) -> L /= "" end, Lines))),
+
+    lists:concat(lists:map(fun([H|_]) -> H end, lists:foldl(fun(X, Acc) -> move_stacks_pt2(X, Acc) end, Stacks, Instructions))).
