@@ -2,7 +2,7 @@
 
 -import(utils, [read_lines/1]).
 
--export([collect_until/2, solution_pt1/0, recursive_get/2, recursive_update/3, df/1, all_dirnames/1]).
+-export([solution_pt1/0, solution_pt2/0]).
 
 collect_until_inner(_, [], AggList, SubList) ->
     lists:reverse([lists:reverse(SubList) | AggList]);
@@ -105,6 +105,32 @@ solution_pt1() ->
     lists:sum(
         lists:filter(
             fun(X) -> X =< 100000 end,
+            lists:map(fun(D) -> df(recursive_get(D, DirTree)) end, all_dirnames(DirTree))
+        )
+    ).
+
+solution_pt2() ->
+    {ok, Lines} = read_lines("input/day7.txt"),
+    Instructions = lists:map(
+        fun parse_lines/1,
+        collect_until(
+            fun(L) ->
+                [H | _] = L,
+                H == $$
+            end,
+            Lines
+        )
+    ),
+    {_, DirTree} = lists:foldl(fun apply_instruction/2, {[], #{"/" => dir}}, Instructions),
+
+    TotalSize = df(DirTree),
+    NeededToSave = TotalSize - 40000000,
+    
+
+
+    lists:min(
+        lists:filter(
+            fun(X) -> X >= NeededToSave end,
             lists:map(fun(D) -> df(recursive_get(D, DirTree)) end, all_dirnames(DirTree))
         )
     ).
