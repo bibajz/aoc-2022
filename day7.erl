@@ -125,8 +125,6 @@ solution_pt2() ->
 
     TotalSize = df(DirTree),
     NeededToSave = TotalSize - 40000000,
-    
-
 
     lists:min(
         lists:filter(
