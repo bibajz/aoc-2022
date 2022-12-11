@@ -2,7 +2,7 @@
 
 -import(utils, [read_lines/1, partition_by_len/2]).
 
--export([to_eval/1, solution_pt1/0]).
+-export([solution_pt1/0, solution_pt2/0]).
 
 floor_div(Num, Denom) -> round(math:floor(Num / Denom)).
 
@@ -62,10 +62,10 @@ to_div_test(Div) -> fun(X) -> X rem Div == 0 end.
 
 split_on_inner(_, [], Truthy, Falsy) ->
     {lists:reverse(Truthy), lists:reverse(Falsy)};
-split_on_inner(Pred, [H|T], Truthy, Falsy) ->
+split_on_inner(Pred, [H | T], Truthy, Falsy) ->
     case Pred(H) of
-        true -> split_on_inner(Pred, T, [H|Truthy], Falsy);
-        false -> split_on_inner(Pred, T, Truthy, [H|Falsy])
+        true -> split_on_inner(Pred, T, [H | Truthy], Falsy);
+        false -> split_on_inner(Pred, T, Truthy, [H | Falsy])
     end.
 split_on(Pred, List) -> split_on_inner(Pred, List, [], []).
 
@@ -82,8 +82,6 @@ throw_items(M1, M2, M3) ->
         {Ix3, Items3 ++ ToFalseItems, Fn3, Div3, TT3, TF3}
     }.
 
-
-
 advance_state(N, MonkeyState) ->
     Current = maps:get(N, MonkeyState),
     {_, _, _, _, ToTrueIx, ToFalseIx} = Current,
@@ -91,7 +89,8 @@ advance_state(N, MonkeyState) ->
     {New, NewToTrue, NewToFalse} = throw_items(Current, ToTrue, ToFalse),
     maps:merge(MonkeyState, #{N => New, ToTrueIx => NewToTrue, ToFalseIx => NewToFalse}).
 
-turns([], MonkeyState) -> [];
+turns([], MonkeyState) ->
+    [];
 turns([H | T], MonkeyState) ->
     NewState = advance_state(H, MonkeyState),
     [NewState] ++ turns(T, NewState).
@@ -126,7 +125,83 @@ solution_pt1() ->
         lists:enumerate(0, lists:droplast(ThrowEvolution))
     ),
 
-    NumInspectionByMonkey =  maps:map(fun(K, V) -> lists:sum(V) end, ByMonkeys),
+    NumInspectionByMonkey = maps:map(fun(K, V) -> lists:sum(V) end, ByMonkeys),
 
-    [N1, N2|_] = lists:reverse(lists:sort(maps:values(NumInspectionByMonkey))),
+    [N1, N2 | _] = lists:reverse(lists:sort(maps:values(NumInspectionByMonkey))),
+    N1 * N2.
+
+to_remainders(N, Divisors) ->
+    maps:from_list(lists:map(fun(X) -> {X, N rem X} end, Divisors)).
+
+normalize(Map) ->
+    maps:map(fun(K, V) -> V rem K end, Map).
+
+throw_items_pt2(M1, M2, M3) ->
+    {Ix1, Items1, Fn1, Div1, TT1, TF1} = M1,
+    {Ix2, Items2, Fn2, Div2, TT2, TF2} = M2,
+    {Ix3, Items3, Fn3, Div3, TT3, TF3} = M3,
+
+    NewItems = lists:map(
+        fun normalize/1, lists:map(fun(X) -> maps:map(fun(K, V) -> Fn1(V) end, X) end, Items1)
+    ),
+    {ToTrueItems, ToFalseItems} = split_on(fun(X) -> maps:get(Div1, X) == 0 end, NewItems),
+    {
+        {Ix1, [], Fn1, Div1, TT1, TF1},
+        {Ix2, Items2 ++ ToTrueItems, Fn2, Div2, TT2, TF2},
+        {Ix3, Items3 ++ ToFalseItems, Fn3, Div3, TT3, TF3}
+    }.
+
+advance_state_pt2(N, MonkeyState) ->
+    Current = maps:get(N, MonkeyState),
+    {_, _, _, _, ToTrueIx, ToFalseIx} = Current,
+    {ToTrue, ToFalse} = {maps:get(ToTrueIx, MonkeyState), maps:get(ToFalseIx, MonkeyState)},
+    {New, NewToTrue, NewToFalse} = throw_items_pt2(Current, ToTrue, ToFalse),
+    maps:merge(MonkeyState, #{N => New, ToTrueIx => NewToTrue, ToFalseIx => NewToFalse}).
+
+turns_pt2([], MonkeyState) ->
+    [];
+turns_pt2([H | T], MonkeyState) ->
+    NewState = advance_state_pt2(H, MonkeyState),
+    [NewState] ++ turns_pt2(T, NewState).
+
+solution_pt2() ->
+    {ok, Lines} = read_lines("input/day11.txt"),
+    Init = maps:from_list(
+        lists:map(
+            fun(X) ->
+                {Ix, _, _, _, _, _} = X,
+                {Ix, X}
+            end,
+            lists:map(
+                fun parse_monkey_state/1,
+                partition_by_len(6, lists:filter(fun(L) -> L /= "" end, Lines))
+            )
+        )
+    ),
+    Divisors = lists:map(fun({_, _, _, D, _, _}) -> D end, maps:values(Init)),
+    InitWithDivMap = maps:map(
+        fun(K, {Ix, Items, Fn, Div, ToTrue, ToFalse}) ->
+            {Ix, lists:map(fun(X) -> to_remainders(X, Divisors) end, Items), Fn, Div, ToTrue,
+                ToFalse}
+        end,
+        Init
+    ),
+    ThrowEvolution = lists:foldl(
+        fun(_, Acc) -> Acc ++ turns_pt2(lists:seq(0, maps:size(Init) - 1), lists:last(Acc)) end,
+        [InitWithDivMap],
+        lists:seq(1, 10000)
+    ),
+
+    ByMonkeys = maps:groups_from_list(
+        fun({I, _}) -> I rem maps:size(Init) end,
+        fun({I, X}) ->
+            {_, Items, _, _, _, _} = maps:get(I rem maps:size(Init), X),
+            length(Items)
+        end,
+        lists:enumerate(0, lists:droplast(ThrowEvolution))
+    ),
+
+    NumInspectionByMonkey = maps:map(fun(K, V) -> lists:sum(V) end, ByMonkeys),
+
+    [N1, N2 | _] = lists:reverse(lists:sort(maps:values(NumInspectionByMonkey))),
     N1 * N2.
